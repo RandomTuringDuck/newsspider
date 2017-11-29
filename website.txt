@@ -1,3 +1,5 @@
 新浪滚动新闻的
 http://roll.news.sina.com.cn/s/channel.php?ch=01#col=92&spec=&type=&ch=01&k=&offset_page=0&offset_num=0&num=60&asc=&page=1
 
+网易的跟帖数的api
+http://comment.news.163.com/api/v1/products/a2869674571f77b5a0867c3d71db5856/threads/{这个是那个文章的编号}

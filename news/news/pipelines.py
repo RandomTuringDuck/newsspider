@@ -19,6 +19,8 @@ class NewsPipeline(object):
         if item.get('news_id',None) is None:
             return item
         flag = {'news_id':item['news_id']}
-        self.mongodb.update({flag},{'$set':dict(item)},upsert=True)
-        return None
+        news_item = dict(item)
+        if spider.name == "sina":
+            self.mongodb.sina.update(flag,{'$set':news_item},True)
+
 

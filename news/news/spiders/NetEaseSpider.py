@@ -31,7 +31,7 @@ class SinaSpider(CrawlSpider):
         item['news_from'] = 'sina'
         self.get_time(response,item)
         self.get_body(response,item)
-        print("item是", item)
+        #print("item是", type(dict(item)))
         yield item
 
     #获取标题
