@@ -3,3 +3,33 @@ http://roll.news.sina.com.cn/s/channel.php?ch=01#col=92&spec=&type=&ch=01&k=&off
 
 网易的跟帖数的api
 http://comment.news.163.com/api/v1/products/a2869674571f77b5a0867c3d71db5856/threads/{这个是那个文章的编号}
+
+新浪的社会新闻的api
+http://api.roll.news.sina.com.cn/zt_list?channel=news&cat_1=shxw&cat_2==zqsk||=qwys||=shwx||=fz-shyf&level==1||=2&show_ext=1&show_all=1&show_num=22&tag=1&format=json&page=2&callback=newsloadercallback&_=1511969495022
+
+新浪新闻评论
+http://comment5.news.sina.com.cn/page/info?version=1&format=js&channel=sh&newsid=comos-fypceiq5146065&group=0&compress=0&ie=gbk&oe=gbk&page=110&page_size=20&jsvar=loader_1511948786993_87420251
+
+http://roll.news.sina.com.cn/interface/rollnews_ch_out_interface.php?col=90,91,92,95&spec=&type=&date=2017-01-01&ch=01&k=&offset_page=0&offset_num=0&num=60&asc=&page=1&r=0.3773402814324667
+
+http://comment5.news.sina.com.cn/page/info?version=1&format=js&channel=gn&newsid=comos-fyetwtf9332558&group=&compress=0&ie=utf-8&oe=utf-8&page=2&page_size=20&jsvar=loader_1512006225255_9410438
+
+
+
+
+新浪的评论需要的字段
+
+against #反对人数
+agree #点赞人数
+area #是哪个地区的
+content #内容
+ip #171.10.196.106
+level #好像是这个评论是第几楼的
+mid #评论的id
+nick #昵称
+parent #上一楼的id
+parent_nike #上一楼的昵称
+time #评论时间
+rank #这个rank不知道是干啥的
+
+

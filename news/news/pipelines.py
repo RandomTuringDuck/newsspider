@@ -16,11 +16,13 @@ class NewsPipeline(object):
 
 
     def process_item(self, item, spider):
-        if item.get('news_id',None) is None:
-            return item
-        flag = {'news_id':item['news_id']}
         news_item = dict(item)
         if spider.name == "sina":
-            self.mongodb.sina.update(flag,{'$set':news_item},True)
+            if news_item['flag'] == "news":
+                flag = {'news_id': item['news_id']}
+                self.mongodb.sina.update(flag,{'$set':news_item},True)
+            elif news_item['flag'] == "comment":
+                flag = {'mid':item['mid']}
+                self.mongodb.sinacmt.update(flag,{'$set':news_item},True)
 
 
