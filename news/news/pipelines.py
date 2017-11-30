@@ -15,7 +15,7 @@ class NewsPipeline(object):
         client = pymongo.MongoClient(HOST,POST)
         self.mongodb = client.news
 
-
+    #生成的item通过这个函数往数据库里写
     def process_item(self, item, spider):
         news_item = dict(item)
         if spider.name == "sina":
@@ -25,7 +25,7 @@ class NewsPipeline(object):
             elif news_item['flag'] == "comment":
                 flag = {'mid':item['mid']}
                 self.mongodb.sinacmt.update(flag,{'$set':news_item},True)
-            elif news_item['flag']=='update':
+            elif news_item['flag']=="update":
                 flag = {'news_id': item['news_id']}
                 del news_item['flag']
                 self.mongodb.sina.update(flag, {'$set': news_item})

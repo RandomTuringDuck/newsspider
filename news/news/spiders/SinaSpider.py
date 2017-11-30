@@ -3,10 +3,13 @@ import json
 import datetime
 import logging
 from news.items import NewsItem,CommentItem,CmntNumItem
+
+
 class SinaSpider(scrapy.Spider):
     name = "sina"
     allowed_domins=['news.sina.com.cn']
 
+    #这个是一开始运行的函数，按照日期构造api,新闻篇数直接弄个了定值1000，90,91,92是国内、国际、社会三个频道
     def start_requests(self):
         url = "http://roll.news.sina.com.cn/interface/rollnews_ch_out_interface.php?col=90,91,92&spec=&" \
               "type=&date=%s&ch=01&k=&offset_page=0&offset_num=0&num=1000&asc=&page=1"
@@ -16,23 +19,27 @@ class SinaSpider(scrapy.Spider):
         for i in range((end - begin).days + 1):
             day = str(begin + datetime.timedelta(days=i))
             temp = url%(day)
-            #获取这一天的新闻数
+            #请求url,回调函数是parse
             yield scrapy.Request(temp, self.parse)
 
     def parse(self,response):
         body = response.body
-        #获取的是bytes数据，转成国标码
+        #获取的是bytes数据，转成国标码,这个视情况而定
         body = str(body,'gbk')
         body = body[body.find("{"):-1]
+        #eval函数是用来处理不太规范的json格式，将其转成字典
         data = eval(body, type('Dummy', (dict,), dict(__getitem__=lambda s,n:n))())
         url_list = data['list']
         print("一共有"+str(len(url_list))+"要爬")
         for i in url_list:
+            if i['url'].startswith("http://video"):
+                continue
+            #去爬每篇文章
             yield scrapy.Request(i['url'], callback=self.parse_article)
-            #request.meta['sjc']=i['time']
 
-    #回调函数,用来获取网页详情
+    #用来获取新闻详情
     def parse_article(self,response):
+        #爬新闻
         if "comment5" not in response.url:
             item = NewsItem()
             item['news_url'] = response.url
@@ -45,64 +52,55 @@ class SinaSpider(scrapy.Spider):
             self.get_keywords(response,item)
             comment_url = "http://comment5.news.sina.com.cn/page/info?version=1&channel=%s&newsid=" \
                       "comos-%s&group=0&compress=0&ie=utf-8&oe=utf-8&page=%s&page_size=%s&format=json"
-            # time.sleep(0.1)
-            # now = comment_url % (item['news_channel'], item['news_id'],1,1)
-            # with requests.get(now,timeout=1) as req:
-            #     data=req.text
-            #     tmp = json.loads(data)
-            # try:
-            #     item['news_show'] = tmp['result']['count']['show']
-            #     item['news_total'] = tmp['result']['count']['total']
-            #     item['flag']="news"
-            # except Exception as e:
-            #     logging.info("第一次获取评论条目时出错："+str(e)+'\n还有url的值'+str(now)+str(tmp))
-            # if tmp['result'].get('count') is None:
-            #     item['news_show'] = 0
-            #     item['news_total'] = 0
-            # else:
-            #     item['news_show'] = tmp['result']['count'].get('show', 0)
-            #     item['news_total'] = tmp['result']['count'].get('total', 0)
             item['flag'] = "news"
+            #构造评论api
             now = comment_url % (item['news_channel'], item['news_id'],1,200)
-            yield scrapy.Request(now, callback=self.parse_article)
+            req = scrapy.Request(now, callback=self.parse_article)
+            req.meta['newsid']=item['news_id'] #往回调函数传值
+            yield req
             yield item
 
+        #爬评论，因为sina限制每页只能爬200个评论，干脆就爬200个了，不再多爬了，其他网站视情况而定
         elif "comment5" in response.url:
             cmnt = response.body
             data = json.loads(cmnt)
             citem = CmntNumItem()
+            #这里从评论中获取评论数目和参与人数，用来更新News
             if data['result'].get('count') is None:
                 citem['news_show'] = 0
                 citem['news_total'] = 0
             else:
                 citem['news_show'] = data['result']['count'].get('show', 0)
                 citem['news_total'] = data['result']['count'].get('total', 0)
+            citem['news_id']=response.meta['newsid']
             citem['flag']='update'
             yield citem
-            cmlist = data['result']['cmntlist']
-            item = CommentItem()
-            print('这一页有多少评论',len(cmlist))
-            for i in range(len(cmlist)):
-                item['flag']="comment"
-                item['agree']=cmlist[i]['agree']
-                item['against']=cmlist[i]['against']
-                item['area']=cmlist[i]['area']
-                item['channel']=cmlist[i]['channel']
-                item['content']=cmlist[i]['content']
-                item['ip']=cmlist[i]['ip']
-                item['level']=cmlist[i]['level']
-                item['mid']=cmlist[i]['mid']
-                item['newsid'] = cmlist[i]['newsid'].strip('comos-')
-                item['nick'] = cmlist[i]['nick']
-                item['parent'] = cmlist[i]['parent']
-                item['parent_nick'] = cmlist[i]['parent_nick']
-                item['parent_uid'] = cmlist[i]['parent_uid']
-                item['rank'] = cmlist[i]['rank']
-                item['thread'] = cmlist[i]['thread']
-                item['time'] = cmlist[i]['time']
-                item['uid'] = cmlist[i]['uid']
-                item['usertype'] = cmlist[i]['usertype']
-                yield item
+            #下面是产生评论的Item
+            if data['result'].get('cmntlist',None) is not None:
+                cmlist = data['result']['cmntlist']
+                item = CommentItem()
+                print('这一页有多少评论',len(cmlist))
+                for i in range(len(cmlist)):
+                    item['flag']="comment"
+                    item['agree']=cmlist[i]['agree']
+                    item['against']=cmlist[i]['against']
+                    item['area']=cmlist[i]['area']
+                    item['channel']=cmlist[i]['channel']
+                    item['content']=cmlist[i]['content']
+                    item['ip']=cmlist[i]['ip']
+                    item['level']=cmlist[i]['level']
+                    item['mid']=cmlist[i]['mid']
+                    item['newsid'] = cmlist[i]['newsid'].strip('comos-')
+                    item['nick'] = cmlist[i]['nick']
+                    item['parent'] = cmlist[i]['parent']
+                    item['parent_nick'] = cmlist[i]['parent_nick']
+                    item['parent_uid'] = cmlist[i]['parent_uid']
+                    item['rank'] = cmlist[i]['rank']
+                    item['thread'] = cmlist[i]['thread']
+                    item['time'] = cmlist[i]['time']
+                    item['uid'] = cmlist[i]['uid']
+                    item['usertype'] = cmlist[i]['usertype']
+                    yield item
 
     #获取关键词
     def get_keywords(self,response,item):
@@ -147,26 +145,3 @@ class SinaSpider(scrapy.Spider):
         time = response.xpath('//span[@id="navtimeSource"]/text()').extract()
         if len(time):
             item['news_time']=time[0][:-2]
-
-    # def sina_api_process(self,res):
-    #     """
-    #     json格式清理，处理api 的response 返回的json,包括1.json数据说明 2.会引起错误的特殊字符
-    #     """
-    #     try:
-    #         data=res.decode("gbk").encode("utf-8")
-    #         value=data[14:-1]
-    #         value=value.replace("'s "," s ")
-    #         keylist=["serverSeconds","last_time","path","title","cType","count","offset_page","offset_num","list","channel","url","type","pic"]
-    #         #关键字+ 空格作为识别键值关键字的格式
-    #         for i in keylist:
-    #             value=value.replace(i+" ","\""+i+"\"")
-    #         value=value.replace("time :","\"time\":")
-    #         value=value.replace("id :","\"id\":")
-    #         #去除会引起错误的 特殊字符
-    #         badwords=["\b"]
-    #         for i in badwords:
-    #             value=value.replace(i,"")
-    #         value=value.replace("'", "\"")
-    #         return value
-    #     except Exception as ex :
-    #         logging.error("error  1:Parse ERROR"+str(ex))

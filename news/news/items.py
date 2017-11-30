@@ -7,6 +7,9 @@
 
 import scrapy
 
+#一个item分三个部分，第一存新闻的内容，第二个在爬评论时用来更新新闻的评论数目和参与人数
+#前两个都是要往新闻内容那张表里存的
+#最后一个是用来存新闻评论，它的newsid与新闻内容的news_id对应
 
 class NewsItem(scrapy.Item):
     # define the fields for your item here like:
