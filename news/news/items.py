@@ -14,7 +14,6 @@ class NewsItem(scrapy.Item):
     news_id = scrapy.Field() #唯一标识
     news_title = scrapy.Field() #标题
     news_time = scrapy.Field() #localtime
-    news_sjc = scrapy.Field() #时间戳
     news_keywords = scrapy.Field() #关键词
     news_url = scrapy.Field() #链接
     news_source = scrapy.Field() #这个是新闻的真正来源

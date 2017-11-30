@@ -24,5 +24,6 @@ class NewsPipeline(object):
             elif news_item['flag'] == "comment":
                 flag = {'mid':item['mid']}
                 self.mongodb.sinacmt.update(flag,{'$set':news_item},True)
+        return item
 
 
