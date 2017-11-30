@@ -19,10 +19,15 @@ class NewsItem(scrapy.Item):
     news_source = scrapy.Field() #这个是新闻的真正来源
     news_from = scrapy.Field() #这个是从网易、新浪等爬下来的
     news_body = scrapy.Field() #新闻内容
-    news_total = scrapy.Field() #参与人数
-    news_show = scrapy.Field() #评论数目
     news_channel = scrapy.Field() #频道
     flag =scrapy.Field()
+
+#用来更新评论数目和参与人数，与上面的新闻item是一对
+class CmntNumItem(scrapy.Item):
+    news_id = scrapy.Field()  # 唯一标识
+    news_show = scrapy.Field()  # 评论数目
+    news_total = scrapy.Field()  # 参与人数
+    flag = scrapy.Field()
 
 class CommentItem(scrapy.Item):
     agree = scrapy.Field()  #赞同

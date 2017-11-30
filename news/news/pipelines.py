@@ -6,6 +6,7 @@
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import pymongo
 
+
 class NewsPipeline(object):
 
     def __init__(self):
@@ -24,6 +25,11 @@ class NewsPipeline(object):
             elif news_item['flag'] == "comment":
                 flag = {'mid':item['mid']}
                 self.mongodb.sinacmt.update(flag,{'$set':news_item},True)
-        return item
+            elif news_item['flag']=='update':
+                flag = {'news_id': item['news_id']}
+                del news_item['flag']
+                self.mongodb.sina.update(flag, {'$set': news_item})
+        return None
+
 
 
